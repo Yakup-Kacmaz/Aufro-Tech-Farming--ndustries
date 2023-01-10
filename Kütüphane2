@@ -1,0 +1,35 @@
+class Library:
+    def __init__(self):
+        self.books = {}
+        self.users = {}
+    
+    def add_book(self, book_name, quantity):
+        self.books[book_name] = quantity
+    
+    def add_user(self, user_name):
+        self.users[user_name] = {'books_borrowed': []}
+    
+    def borrow_book(self, user_name, book_name):
+        if book_name not in self.books:
+            return 'Book not available'
+        if user_name not in self.users:
+            return 'User not found'
+        if self.books[book_name] == 0:
+            return 'Book is not in stock'
+        self.books[book_name] -= 1
+        self.users[user_name]['books_borrowed'].append(book_name)
+        return 'Book borrowed successfully'
+    
+    def return_book(self, user_name, book_name):
+        if user_name not in self.users:
+            return 'User not found'
+        if book_name not in self.users[user_name]['books_borrowed']:
+            return 'Book not found'
+        self.books[book_name] += 1
+        self.users[user_name]['books_borrowed'].remove(book_name)
+        return 'Book returned successfully'
+    
+    def search_book(self, book_name):
+        if book_name not in self.books:
+            return 'Book not found'
+        return self.books[book_name]
