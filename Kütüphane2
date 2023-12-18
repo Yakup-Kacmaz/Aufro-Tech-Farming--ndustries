@@ -1,35 +1,68 @@
-class Library:
-    def __init__(self):
-        self.books = {}
-        self.users = {}
+#include <AFMotor.h>  //Gerekli motor kontrol be Bluetooth kontrol kütüphanelerinin eklenmesi
+#include <SoftwareSerial.h>
+#include <Servo.h>
+
+Servo servo1;  //servo motorun tanımlanması ( Tohum makinasını aç kapa yapan motor)
+
+SoftwareSerial serial_bt(14,15); //Bluetooth modülünün pin bağlantısı
+
+
+AF_DCMotor motor_sag(2);  // sağ motorların tanımı
+AF_DCMotor motor_sol(3);  // sol motorların tanımı
+AF_DCMotor motor_seed(1); //tohum makinasının motoru
+
+ 
+int Speed = 150; //temel robotun hızı ( Max : 255 olabilir.)
+
+char value_rx;
+
+haarcascade_frontalface_default.xml
+void setup() {
+  Serial.begin(9600);
+  serial_bt.begin(9600);
+  motor_sag.setSpeed(Speed);  //Motorlara hız tanımının yapılması
+  motor_sol.setSpeed(Speed);
+  motor_seed.setSpeed(Speed);  
+  servo1.attach(10);  //Sevo motorun pin tanımı ve başlangıç açısının ayarlanması
+  servo1.write(95);
+}
+ 
+void loop() {
+  if (serial_bt.available() > 0) {
+    value_rx = serial_bt.read();
+  }
+  if (value_rx == 'F') {  //Cihazdan ileri komutu gelince motorların ileri hareket etmesi
+    motor_sag.run(FORWARD);
+    motor_sol.run(FORWARD);
     
-    def add_book(self, book_name, quantity):
-        self.books[book_name] = quantity
+  } else if (value_rx == 'B') { //Cihazdan geri komutu gelince motorların geri hareket etmesi
+    motor_sag.run(BACKWARD);
+    motor_sol.run(BACKWARD);
     
-    def add_user(self, user_name):
-        self.users[user_name] = {'books_borrowed': []}
+  } else if (value_rx == 'L') { ////Cihazdan sol komutu gelince motorların sola hareket etmesi
+    motor_sag.run(FORWARD);
+    motor_sol.run(BACKWARD);
     
-    def borrow_book(self, user_name, book_name):
-        if book_name not in self.books:
-            return 'Book not available'
-        if user_name not in self.users:
-            return 'User not found'
-        if self.books[book_name] == 0:
-            return 'Book is not in stock'
-        self.books[book_name] -= 1
-        self.users[user_name]['books_borrowed'].append(book_name)
-        return 'Book borrowed successfully'
+  } else if (value_rx == 'R') { //Cihazdan sağ komutu gelince motorların sağa hareket etmesi
+    motor_sag.run(BACKWARD);
+    motor_sol.run(FORWARD);
+     
+  }
+   else if (value_rx == 'V') { //Tohum makinesinin açılması
+    motor_seed.run(FORWARD);
+    servo1.write(45);
+     
+  }
+   else if (value_rx == 'v') { //Tohum makinesinin kapatılması
+    motor_seed.run(RELEASE);
+    servo1.write(95);
+     
+  }
+
+  else {   //herhangi bir komut gelmediğinde motorların durması
+    motor_sag.run(RELEASE);
+    motor_sol.run(RELEASE);
     
-    def return_book(self, user_name, book_name):
-        if user_name not in self.users:
-            return 'User not found'
-        if book_name not in self.users[user_name]['books_borrowed']:
-            return 'Book not found'
-        self.books[book_name] += 1
-        self.users[user_name]['books_borrowed'].remove(book_name)
-        return 'Book returned successfully'
-    
-    def search_book(self, book_name):
-        if book_name not in self.books:
-            return 'Book not found'
-        return self.books[book_name]
+  }
+ 
+}
